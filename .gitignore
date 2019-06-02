@@ -1,5 +1,8 @@
 # my stuff
-darknet/
+*.zip
+.idea/
+models/
+images/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

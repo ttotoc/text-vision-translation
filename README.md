@@ -1,2 +1,2 @@
-# torch-img-txt 
-Automatic detection, recognition and English-Romanian translation of text from images.
+# Text Detection, Recognition and Translation from Images
+Automatic detection & recognition of text from images as well as English-Romanian translation.

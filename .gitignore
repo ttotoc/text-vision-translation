@@ -1,7 +1,10 @@
 # my stuff
 *.zip
 .idea/
-models/
+
+models/*
+!models/readme.txt
+
 images/
 
 # Byte-compiled / optimized / DLL files

@@ -7,6 +7,7 @@ import cv2
 import arguments
 import detection
 import recognition
+import translation
 
 if __name__ == "__main__":
 

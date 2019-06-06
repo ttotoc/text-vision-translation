@@ -2,7 +2,8 @@ from os.path import join as path_join
 
 ARGS = None
 
-MODELS_DIR = "../models/"
+TEXT_DETECTION_MODELS_DIR = "../models/text_detection/"
+TRANSLATION_MODELS_DIR = "../models/translation/"
 IMAGES_DIR = "../images/"
 
 
@@ -24,7 +25,7 @@ def parse_args():
         "-east",
         "--east-model",
         type=str,
-        default=path_join(MODELS_DIR, "frozen_east_text_detection.pb"),
+        default=path_join(TEXT_DETECTION_MODELS_DIR, "frozen_east_text_detection.pb"),
         help="path to input EAST text detector model"
     )
     ap.add_argument(

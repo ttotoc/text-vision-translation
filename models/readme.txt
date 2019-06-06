@@ -1,1 +1,0 @@
-Model files are to be placed here.

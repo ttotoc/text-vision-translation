@@ -54,7 +54,7 @@ def perform(image, boxes):
     # sort the results bounding box coordinates from top to bottom
     results = sorted(results, key=lambda r: r[0][1]) # key = start_y
 
-    # loop over the results
+    # loop over the results and show them on the image
     for ((start_x, start_y, end_x, end_y), text) in results:
         # display the text OCR'd by Tesseract
         print(f'Recognized text: "{text}"')

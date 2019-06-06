@@ -2,9 +2,6 @@
 *.zip
 .idea/
 
-models/*
-!models/readme.txt
-
 images/
 
 # Byte-compiled / optimized / DLL files

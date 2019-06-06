@@ -1,0 +1,1 @@
+Text detection models are placed here

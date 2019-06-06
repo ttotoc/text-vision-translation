@@ -3,6 +3,7 @@ import tensorflow as tf
 import unicodedata
 import re
 from sortedcontainers import SortedSet
+from numpy import Inf
 
 
 def unicode_to_ascii(text):
@@ -52,65 +53,63 @@ def build_dataset(path, num_examples=None):
 # class that stores data about the words of a language
 # word2idx(ex: "dog" -> 1) and idx2word(ex: 1 -> "dog") dictionaries
 # and a set with all the words
-class WordData:
+class LanguageData:
 
     def __init__(self, sentences):
 
         # self.sentences = sentences
         self.word2idx = {}
         self.idx2word = {}
-        self.vocab = SortedSet()
 
+        vocabulary = SortedSet()
         for phrase in sentences:
-            self.vocab.update(phrase.split(' '))
+            vocabulary.update(phrase.split(' '))
 
         self.word2idx['<pad>'] = 0
-        for index, word in enumerate(self.vocab):
+        for index, word in enumerate(vocabulary):
             self.word2idx[word] = index + 1
 
         for word, index in self.word2idx.items():
             self.idx2word[index] = word
 
 
-def max_row_len(tensor):
-    # given a list of lists, return the max length of a sublist
-    return max(len(lst) for lst in tensor)
+def convert_sentences(sentences, lang_data):
+    max_len = -Inf
+    converted_sentences = []
+    for sentence in sentences:
+        conv_sentence = [lang_data.word2idx[word] for word in sentence.split()]
+        if max_len < len(conv_sentence):
+            max_len = len(conv_sentence)
+        converted_sentences.append(conv_sentence)
+
+    return converted_sentences, max_len
 
 
 def load_dataset(path, num_examples=None):
     sentence_pairs = build_dataset(path, num_examples)
 
     # get the sentence pairs
-    en_sentences = [en for en, _ in sentence_pairs]
-    ro_sentences = [ro for _, ro in sentence_pairs]
+    input_sentences = [en for en, _ in sentence_pairs]
+    target_sentences = [ro for _, ro in sentence_pairs]
 
-    input_words = WordData(en_sentences)
-    target_words = WordData(ro_sentences)
+    input_lang_data = LanguageData(input_sentences)
+    target_lang_data = LanguageData(target_sentences)
 
-    # store the sentences as a 2d array of word indices
-    # input(en sentences)
-    input_tensor = [
-        [input_words.word2idx[word] for word in sentence.split()] for sentence in en_sentences
-    ]
-    # target(ro sentences)
-    target_tensor = [
-        [target_words.word2idx[word] for word in sentence.split()] for sentence in ro_sentences
-    ]
-
-    max_len_input = max_row_len(input_tensor)
-    max_len_target = max_row_len(target_tensor)
+    # store the sentences as a 2d array of word indices and calculate max sentence length along the way
+    inputs, max_len_input = convert_sentences(input_sentences, input_lang_data)
+    targets, max_len_target = convert_sentences(target_sentences, target_lang_data)
 
     # add padding to every sentence until length reaches max_len_#
-    input_tensor = tf.keras.preprocessing.sequence.pad_sequences(
-        input_tensor,
+    inputs = tf.keras.preprocessing.sequence.pad_sequences(
+        inputs,
         maxlen=max_len_input,
         padding='post'
     )
 
-    target_tensor = tf.keras.preprocessing.sequence.pad_sequences(
-        target_tensor,
+    targets = tf.keras.preprocessing.sequence.pad_sequences(
+        targets,
         maxlen=max_len_target,
         padding='post'
     )
 
-    return input_tensor, target_tensor, input_words, target_words, max_len_input, max_len_target
+    return inputs, targets, input_lang_data, target_lang_data, max_len_input, max_len_target

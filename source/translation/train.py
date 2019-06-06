@@ -3,16 +3,15 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from os.path import join as path_join
 import time
-import matplotlib.pyplot as plt
 
 import data_preparation
-import net_params_saving
+import params_saveload
 
 # do the tensor ops instantly
 tf.enable_eager_execution()
 
 # --paths--
-DATASET_PATH = "..\\..\\translation_dataset\\dataset.txt"
+DATASET_PATH = path_join("..", "..", "translation_dataset", "dataset.txt")
 
 # --dataset--
 NUM_EXAMPLES = None  # how many examples to use for training. None = all data
@@ -24,11 +23,12 @@ EMBEDDING_DIM = 64
 HIDDEN_UNITS = 256
 EPOCHS = 10
 
-# checkpoints
-CHECKPOINT_DIR = 'S:\\transl_models'
+# --saving--
+CHECKPOINT_SAVE_DIR = path_join("S:", "transl_models")
 CHECKPOINT_PREFIX = "checkpoint"
+PARAMS_SAVE_PATH = path_join(CHECKPOINT_SAVE_DIR, CHECKPOINT_PREFIX + ".pickle")
 
-inputs_train, targets_train, input_words, target_words, max_len_input, max_len_target = \
+inputs_train, targets_train, input_lang_data, target_lang_data, max_len_input, max_len_target = \
     data_preparation.load_dataset(DATASET_PATH, NUM_EXAMPLES)
 
 # split training and validation sets using an 80-20 split
@@ -36,16 +36,15 @@ inputs_train, inputs_val, targets_train, targets_val = \
     train_test_split(inputs_train, targets_train, test_size=VALIDATION_PCT)
 
 # vocabulary lengths
-input_vocab_len = len(input_words.word2idx)
-target_vocab_len = len(target_words.word2idx)
+input_vocab_len = len(input_lang_data.word2idx)
+target_vocab_len = len(target_lang_data.word2idx)
 
-# train len and number of batches
-inputs_train_len = len(inputs_train)
-num_batches = inputs_train_len // BATCH_SIZE
+# number of batches
+num_batches = len(inputs_train) // BATCH_SIZE
 
 print(
     "Data lengths: "
-    f"Input train = {inputs_train_len}, Target train = {len(targets_train)}, "
+    f"Input train = {len(inputs_train)}, Target train = {len(targets_train)}, "
     f"Input val = {len(inputs_val)}, Target val = {len(targets_val)}, "
     f"Input vocab = {input_vocab_len}, Target vocab = {target_vocab_len}, Train examples = {NUM_EXAMPLES}\n"
     "Hyperparams: "
@@ -53,8 +52,19 @@ print(
     f"Total batches: {num_batches}"
 )
 
+# save language data and params for this training session
+params_saveload.save(
+    PARAMS_SAVE_PATH,
+    num_examples=NUM_EXAMPLES, validation_pct=VALIDATION_PCT,
+    batch_size=BATCH_SIZE, embedding_dim=EMBEDDING_DIM, hidden_units=HIDDEN_UNITS, epochs=EPOCHS,
+    input_lang_data=input_lang_data, target_lang_data=target_lang_data,
+    max_len_input=max_len_input, max_len_target=max_len_target,
+    input_vocab_len=input_vocab_len, target_vocab_len=target_vocab_len,
+    num_batches=num_batches
+)
+
 # init tensorflow dataset
-dataset = tf.data.Dataset.from_tensor_slices((inputs_train, targets_train)).shuffle(inputs_train_len)
+dataset = tf.data.Dataset.from_tensor_slices((inputs_train, targets_train)).shuffle(len(inputs_train))
 dataset = dataset.batch(BATCH_SIZE, drop_remainder=True)
 
 
@@ -67,9 +77,9 @@ def gru(units):
 
 
 class Encoder(tf.keras.Model):
-    def __init__(self, vocab_size, embedding_dim, enc_units, batch_sz):
+    def __init__(self, vocab_size, embedding_dim, enc_units, batch_size):
         super(Encoder, self).__init__()
-        self.batch_sz = batch_sz
+        self.batch_sz = batch_size
         self.enc_units = enc_units
         self.embedding = tf.keras.layers.Embedding(vocab_size, embedding_dim)
         self.gru = gru(self.enc_units)
@@ -84,9 +94,9 @@ class Encoder(tf.keras.Model):
 
 
 class Decoder(tf.keras.Model):
-    def __init__(self, vocab_size, embedding_dim, dec_units, batch_sz):
+    def __init__(self, vocab_size, embedding_dim, dec_units, batch_size):
         super(Decoder, self).__init__()
-        self.batch_sz = batch_sz
+        self.batch_sz = batch_size
         self.dec_units = dec_units
         self.embedding = tf.keras.layers.Embedding(vocab_size, embedding_dim)
         self.gru = gru(self.dec_units)
@@ -152,7 +162,7 @@ def loss_function(real, pred):
     return tf.reduce_mean(loss_)
 
 
-checkpoint_prefix = path_join(CHECKPOINT_DIR, CHECKPOINT_PREFIX)
+checkpoint_prefix = path_join(CHECKPOINT_SAVE_DIR, CHECKPOINT_PREFIX)
 checkpoint = tf.train.Checkpoint(optimizer=optimizer,
                                  encoder=encoder,
                                  decoder=decoder)
@@ -174,7 +184,7 @@ for epoch in range(EPOCHS):
 
             dec_hidden = enc_hidden
 
-            dec_input = tf.expand_dims([target_words.word2idx['<start>']] * BATCH_SIZE, 1)
+            dec_input = tf.expand_dims([target_lang_data.word2idx['<start>']] * BATCH_SIZE, 1)
 
             # Teacher forcing - feeding the target as the next input
             for t in range(1, targets.shape[1]):
@@ -203,71 +213,9 @@ for epoch in range(EPOCHS):
     if min_total_loss >= total_loss / num_batches:
         min_total_loss = total_loss / num_batches
         print(f"Found new min loss: {min_total_loss}. Saving model...")
-        checkpoint.save(file_prefix=checkpoint_prefix)
+        checkpoint_name = checkpoint.save(file_prefix=checkpoint_prefix)
 
     print('Epoch {} Loss {:.4f}'.format(epoch + 1, total_loss / num_batches))
     print(f'Time taken for this epoch: {time.time() - start:.4f} seconds\n')
 
 print(f'Total train time: {time.time() - total_time:.4f} seconds')
-
-
-def evaluate(sentence, encoder, decoder, inp_lang, targ_lang, max_length_inp, max_length_targ):
-    attention_plot = np.zeros((max_length_targ, max_length_inp))
-
-    sentence = data_preparation.preprocess_sentence(sentence)
-
-    inputs = [inp_lang.word2idx[i] for i in sentence.split(' ')]
-    inputs = tf.keras.preprocessing.sequence.pad_sequences([inputs], maxlen=max_length_inp, padding='post')
-    inputs = tf.convert_to_tensor(inputs)
-
-    result = ''
-
-    hidden = [tf.zeros((1, HIDDEN_UNITS))]
-    enc_out, enc_hidden = encoder(inputs, hidden)
-
-    dec_hidden = enc_hidden
-    dec_input = tf.expand_dims([targ_lang.word2idx['<start>']], 0)
-
-    for t in range(max_length_targ):
-        predictions, dec_hidden, attention_weights = decoder(dec_input, dec_hidden, enc_out)
-
-        # storing the attention weights to plot later on
-        attention_weights = tf.reshape(attention_weights, (-1,))
-        attention_plot[t] = attention_weights.numpy()
-
-        predicted_id = tf.argmax(predictions[0]).numpy()
-
-        result += targ_lang.idx2word[predicted_id] + ' '
-
-        if targ_lang.idx2word[predicted_id] == '<end>':
-            return result, sentence, attention_plot
-
-        # the predicted ID is fed back into the model
-        dec_input = tf.expand_dims([predicted_id], 0)
-
-    return result, sentence, attention_plot
-
-
-# function for plotting the attention weights
-def plot_attention(attention, sentence, predicted_sentence):
-    fig = plt.figure(figsize=(10, 10))
-    ax = fig.add_subplot(1, 1, 1)
-    ax.matshow(attention, cmap='viridis')
-
-    fontdict = {'fontsize': 14}
-
-    ax.set_xticklabels([''] + sentence, fontdict=fontdict, rotation=90)
-    ax.set_yticklabels([''] + predicted_sentence, fontdict=fontdict)
-
-    plt.show()
-
-
-def translate(sentence, encoder, decoder, inp_lang, targ_lang, max_length_inp, max_length_targ):
-    result, sentence, attention_plot = evaluate(sentence, encoder, decoder, inp_lang, targ_lang, max_length_inp,
-                                                max_length_targ)
-
-    print('Input: {}'.format(sentence))
-    print('Predicted translation: {}'.format(result))
-
-    attention_plot = attention_plot[:len(result.split(' ')), :len(sentence.split(' '))]
-    plot_attention(attention_plot, sentence.split(' '), result.split(' '))

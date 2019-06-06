@@ -51,7 +51,7 @@ def perform(image):
         # loop over the number of columns
         for x in range(0, columns):
             # ignore scores that don't have sufficient probability
-            if scores_row[x] < ARGS.min_confidence:
+            if scores_row[x] < ARGS.min_confidence_roi:
                 continue
 
             # compute the offset factor as our resulting feature

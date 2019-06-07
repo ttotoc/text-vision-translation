@@ -3,7 +3,6 @@ import cv2
 
 
 def perform(image, boxes):
-
     # cli arguments
     from arguments import ARGS
 
@@ -52,7 +51,7 @@ def perform(image, boxes):
         results.append(((start_x, start_y, end_x, end_y), text))
 
     # sort the results bounding box coordinates from top to bottom
-    results = sorted(results, key=lambda r: r[0][1]) # key = start_y
+    results = sorted(results, key=lambda r: r[0][1])  # key = start_y
 
     # loop over the results and show them on the image
     for ((start_x, start_y, end_x, end_y), text) in results:

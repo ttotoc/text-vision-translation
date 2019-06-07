@@ -9,7 +9,6 @@ IMAGES_DIR = "../images/"
 
 
 def parse_args():
-
     # CLI Arguments library
     import argparse
 
@@ -18,22 +17,28 @@ def parse_args():
     ap.add_argument(
         "-img",
         "--image",
-        required=True,
         type=str,
-        help="path to input image"
+        help="input image(located in ../images/). NOTE: This cannot be used with -s at the same time"
     )
     ap.add_argument(
         "-east",
         "--east-model",
         type=str,
         default=path_join(TEXT_DETECTION_MODELS_DIR, "frozen_east_text_detection.pb"),
-        help="EAST text detector model(with the extension)"
+        help="EAST text detector model(with the extension, located in ../models/text_detection/)"
     )
     ap.add_argument(
         "-tm",
         "--translation-model",
         type=str,
-        help="name of the translation model"
+        required=True,
+        help="name of the translation model(without extension, located in ../models/translation/)"
+    )
+    ap.add_argument(
+        "-s",
+        "--sequence",
+        type=str,
+        help="the sequence of words to be translated. NOTE: This cannot be used with -img at the same time"
     )
     ap.add_argument(
         "-c",
@@ -68,27 +73,40 @@ def parse_args():
     global ARGS
     ARGS = ap.parse_args()
 
-    # image
-    ARGS.image = path_join(IMAGES_DIR, ARGS.image)
-    if not isfile(ARGS.image):
-        raise FileNotFoundError("Input image could not be found.")
+    # image OR sequence of words as input, not both simultaneously
+    if ARGS.image and ARGS.sequence:
+        ap.error("--image and --sequence parameters cannot be used in the same run instance.")
+    if ARGS.image:
+        ARGS.image = path_join(IMAGES_DIR, ARGS.image)
 
-    # east model
-    ARGS.east_model = path_join(TEXT_DETECTION_MODELS_DIR, ARGS.east_model)
-    if not isfile(ARGS.east_model):
-        raise FileNotFoundError("Detector model could not be found.")
+        if not isfile(ARGS.image):
+            ap.error("Input image could not be found.")
+
+        # east model
+        ARGS.east_model = path_join(TEXT_DETECTION_MODELS_DIR, ARGS.east_model)
+        if not isfile(ARGS.east_model):
+            ap.error("Detector model could not be found.")
+
+        if ARGS.width % 32 != 0:
+            ap.error("Resized width must be a multiple of 32.")
+
+        if ARGS.height % 32 != 0:
+            ap.error("Resized height must be a multiple of 32.")
+
+        if not 0.0 <= ARGS.padding:
+            ap.error("Padding cannot be negative.")
+    elif not ARGS.sequence:
+        ap.error("Neither the --image nor the --sequence parameter have been introduced.")
 
     # translation model
-    if not isfile(path_join(TRANSLATION_MODELS_DIR, ARGS.translation_model) + ".index"):
+    model_path = path_join(TRANSLATION_MODELS_DIR, ARGS.translation_model)
+    params_path = path_join(TRANSLATION_MODELS_DIR, ARGS.translation_model) + ".pickle"
+    if not isfile(model_path + ".index"):
         raise FileNotFoundError("The .index file associated with the model could not be found.")
-    if not isfile(path_join(TRANSLATION_MODELS_DIR, ARGS.translation_model) + ".pickle"):
+    if not isfile(params_path):
         raise FileNotFoundError("The params(.pickle file) associated with the model could not be found.")
-
-    if ARGS.width % 32 != 0:
-        raise ValueError("Resized width must be a multiple of 32.")
-
-    if ARGS.height % 32 != 0:
-        raise ValueError("Resized height must be a multiple of 32.")
-
-    if not 0.0 <= ARGS.padding:
-        raise ValueError("Padding cannot be negative.")
+    # modify the argument to store a dict of model and params paths
+    ARGS.translation_model = {
+        "model": model_path,
+        "params": params_path
+    }

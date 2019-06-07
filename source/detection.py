@@ -4,7 +4,6 @@ import cv2
 
 
 def perform(image):
-
     # get cli arguments
     from arguments import ARGS
 

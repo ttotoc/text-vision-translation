@@ -1,9 +1,8 @@
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
 
-import params_saveload
-import data_preparation
-from train import Decoder, Encoder
+from translation.train import Decoder, Encoder
+from . import data_preparation, params_saveload
 
 
 def evaluate(sentence, encoder, decoder, input_lang_data, target_lang_data, max_len_input, max_len_target):
@@ -50,9 +49,10 @@ def translate(sentence, encoder, decoder, input_lang_data, target_lang_data, max
     return result
 
 
-def perform(sentence):
+def perform(sentences):
     from arguments import ARGS
 
+    print("[INFO] loading translation model language...")
     params = params_saveload.load(ARGS.translation_model["params"])
 
     encoder = Encoder(params["input_vocab_len"], params["embedding_dim"], params["hidden_units"], params["batch_size"])
@@ -63,11 +63,19 @@ def perform(sentence):
                                      encoder=encoder,
                                      decoder=decoder)
 
+    print("[INFO] loading translation model variables...")
     checkpoint.restore(ARGS.translation_model["model"])
 
-    return translate(
-        sentence,
-        encoder, decoder,
-        params["input_lang_data"], params["target_lang_data"],
-        params["max_len_input"], params["max_len_target"]
-    )
+    print("Translations: ")
+    for i, sentence in enumerate(sentences):
+        translated = translate(
+            sentence,
+            encoder, decoder,
+            params["input_lang_data"], params["target_lang_data"],
+            params["max_len_input"], params["max_len_target"]
+        )
+
+        print(
+            f"Input: {sentence}\n"
+            f"Output: {translated}\n"
+        )

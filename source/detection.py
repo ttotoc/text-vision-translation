@@ -1,6 +1,6 @@
-from imutils.object_detection import non_max_suppression
-import numpy as np
 import cv2
+import numpy as np
+from imutils.object_detection import non_max_suppression
 
 
 def perform(image):

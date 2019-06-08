@@ -2,6 +2,11 @@
 
 import pickle
 
+# fix for cli run
+import sys
+
+sys.path.append('translation')
+
 
 def save(path, **kwargs):
     f = open(path, 'wb')

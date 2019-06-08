@@ -2,13 +2,17 @@
 # for images:               python main.py --east frozen_east_text_detection.pb --image example_01.jpg
 # for sequence translation: python main.py --translation-model checkpoint --sequence "How are you?"
 
+from os import environ
 import cv2
 import tensorflow as tf
 
 import arguments
 import detection
 import recognition
-import translation
+from translation import translation
+
+# show only error logs
+environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
 # do the tensor ops instantly
 tf.enable_eager_execution()
@@ -32,9 +36,9 @@ if __name__ == "__main__":
 
     # text processing
     else:
-        print("wetf")
+
         # get seq argument value
-        text = arguments.ARGS.sequence
+        text = [arguments.ARGS.sequence]
 
     # perform translation on returned text and print to console
-    print(translation.perform(text))
+    translation.perform(text)

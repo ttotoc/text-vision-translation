@@ -1,5 +1,5 @@
-from os.path import join as path_join
 from os.path import isfile
+from os.path import join as path_join
 
 ARGS = None
 

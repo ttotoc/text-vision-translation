@@ -1,9 +1,9 @@
-import tensorflow as tf
-
-import unicodedata
 import re
-from sortedcontainers import SortedSet
+import unicodedata
+
+import tensorflow as tf
 from numpy import Inf
+from sortedcontainers import SortedSet
 
 
 def unicode_to_ascii(text):

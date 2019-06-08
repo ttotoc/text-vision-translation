@@ -1,5 +1,5 @@
-import pytesseract
 import cv2
+import pytesseract
 
 
 def perform(image, boxes):
@@ -73,3 +73,6 @@ def perform(image, boxes):
 
     # freeze execution until keypress
     cv2.waitKey(0)
+
+    # return text results
+    return [result[1] for result in results]

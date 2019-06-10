@@ -41,6 +41,13 @@ def parse_args():
         help="the sequence of words to be translated. NOTE: This cannot be used with -img at the same time"
     )
     ap.add_argument(
+        "-cat",
+        "--concatenate",
+        action="store_true",
+        help="only for text recognition, determines whether the recognized text list returned by the Tesseract"
+             "is concatenated into a single sequence or not(for then to be transmitted to the translation model)"
+    )
+    ap.add_argument(
         "-c",
         "--min-confidence-roi",
         type=float,
@@ -65,7 +72,7 @@ def parse_args():
         "-p",
         "--padding",
         type=float,
-        default=0.0,
+        default=0.05,
         help="amount of padding to add to each border of a region of interest(0.0 - 1.0)"
     )
 

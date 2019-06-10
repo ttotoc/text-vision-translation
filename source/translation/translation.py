@@ -10,7 +10,7 @@ def evaluate(sentence, encoder, decoder, input_lang_data, target_lang_data, max_
 
     sentence = data_preparation.preprocess_sentence(sentence)
 
-    inputs = [input_lang_data.word2idx[i] for i in sentence.split(' ')]
+    inputs = [input_lang_data.word2idx[word] for word in sentence.split(' ')]
     inputs = tf.keras.preprocessing.sequence.pad_sequences([inputs], maxlen=max_len_input, padding='post')
     inputs = tf.convert_to_tensor(inputs)
 

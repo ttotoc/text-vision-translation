@@ -53,6 +53,9 @@ def perform(image, boxes):
     # sort the results bounding box coordinates from top to bottom
     results = sorted(results, key=lambda r: r[0][1])  # key = start_y
 
+    # make a copy the output image
+    output = image.copy()
+
     # loop over the results and show them on the image
     for ((start_x, start_y, end_x, end_y), text) in results:
         # display the text OCR'd by Tesseract
@@ -61,18 +64,18 @@ def perform(image, boxes):
         # remove the non-ASCII characters from the resulting text
         text = "".join((c if ord(c) < 128 else "" for c in text)).strip()
 
-        output = image.copy()
-
         # draw the text and a bounding box surrounding the text region of the input image
-        cv2.rectangle(output, (start_x, start_y), (end_x, end_y), (0, 0, 255), thickness=2)
-        cv2.putText(output, text, (start_x, start_y - 20),
-                    cv2.FONT_HERSHEY_PLAIN, fontScale=1.6, color=(50, 50, 255), thickness=2)
+        cv2.rectangle(output, (start_x, start_y), (end_x, end_y), (0, 0, 255), thickness=1)
+        cv2.putText(output, text, (start_x, start_y - 10),
+                    cv2.FONT_HERSHEY_PLAIN, fontScale=1.6, color=(50, 50, 255), thickness=1)
 
-        # show the output image
-        cv2.imshow(text, output)
+    cv2.imshow(ARGS.image, output)
 
-    # freeze execution until keypress
+    # freeze until keypress
     cv2.waitKey(0)
 
     # return text results
+    if ARGS.concatenate:
+        return [' '.join([result[1] for result in results])]
+
     return [result[1] for result in results]

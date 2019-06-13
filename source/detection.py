@@ -31,7 +31,7 @@ def perform(image):
 
     # use the scores array to grab the number of rows and columns
     rows, columns = scores.shape[2:4]
-    # initialize our set of bounding box rectangles and corresponding confidence scores
+    # initialize our set of bounding box rectangles and their corresponding confidence scores
     rectangles = []
     confidences = []
 
@@ -82,5 +82,5 @@ def perform(image):
             confidences.append(scores_row[x])
 
     # apply non-maxima suppression to suppress weak, overlapping bounding boxes
-    boxes = non_max_suppression(np.array(rectangles), probs=confidences)
+    boxes = non_max_suppression(np.array(rectangles), probs=confidences, overlapThresh=0.1)
     return boxes

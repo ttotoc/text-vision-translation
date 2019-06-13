@@ -2,9 +2,21 @@ import cv2
 import pytesseract
 
 
-def perform(image, boxes):
+def perform(image, boxes=None):
     # cli arguments
     from arguments import ARGS
+
+    # tesseract config
+    # in order to apply Tesseract v4 to OCR text we must supply
+    # (1) a language, (2) an OEM flag of 1, indicating that the we
+    # wish to use the LSTM neural net model for OCR, and finally
+    # (3) an OEM value, in this case, 7 which implies that we are
+    # treating the image as a single line of text
+    config = ARGS.tesseract_config
+
+    # perform recognition on whole image if no boxes
+    if boxes is None:
+        return [pytesseract.image_to_string(image, config=config)]
 
     orig_height, orig_width = image.shape[:2]
 
@@ -38,12 +50,6 @@ def perform(image, boxes):
         # extract the actual padded ROI
         roi = image[start_y:end_y, start_x:end_x]
 
-        # in order to apply Tesseract v4 to OCR text we must supply
-        # (1) a language, (2) an OEM flag of 4, indicating that the we
-        # wish to use the LSTM neural net model for OCR, and finally
-        # (3) an OEM value, in this case, 7 which implies that we are
-        # treating the ROI as a single line of text
-        config = "-l eng --oem 1 --psm 7"
         text = pytesseract.image_to_string(roi, config=config)
 
         # add the bounding box coordinates and OCR'd text to the list
@@ -66,8 +72,8 @@ def perform(image, boxes):
 
         # draw the text and a bounding box surrounding the text region of the input image
         cv2.rectangle(output, (start_x, start_y), (end_x, end_y), (0, 0, 255), thickness=1)
-        cv2.putText(output, text, (start_x, start_y - 10),
-                    cv2.FONT_HERSHEY_PLAIN, fontScale=1.6, color=(50, 50, 255), thickness=1)
+        # cv2.putText(output, text, (start_x, start_y - 10),
+        #             cv2.FONT_HERSHEY_PLAIN, fontScale=1.6, color=(50, 50, 255), thickness=1)
 
     cv2.imshow(ARGS.image, output)
 

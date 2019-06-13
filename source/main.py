@@ -28,11 +28,15 @@ if __name__ == "__main__":
         # load the input image
         image = cv2.imread(arguments.ARGS.image)
 
-        # perform detection on the image and get the bounding boxes
-        boxes = detection.perform(image)
+        # perform detection on the image and get the bounding boxes, if east_model was provided
+        if arguments.ARGS.east_model:
+            boxes = detection.perform(image)
 
-        # perform recognition on the image with the help of the bounding boxes
-        text = recognition.perform(image, boxes)
+            # perform recognition on the image with the help of the bounding boxes
+            text = recognition.perform(image, boxes)
+        else:
+            # perform recognition on the image without bounding boxes
+            text = recognition.perform(image)
 
     # text processing
     else:

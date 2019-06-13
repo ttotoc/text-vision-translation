@@ -24,8 +24,9 @@ def parse_args():
         "-east",
         "--east-model",
         type=str,
-        default=path_join(TEXT_DETECTION_MODELS_DIR, "frozen_east_text_detection.pb"),
-        help="EAST text detector model(with the extension, located in ../models/text_detection/)"
+        #default=path_join(TEXT_DETECTION_MODELS_DIR, "frozen_east_text_detection.pb"),
+        help="EAST text detector model(with the extension, located in ../models/text_detection/)."
+             "If not provided, the program will use Tesseract on the whole input image"
     )
     ap.add_argument(
         "-tm",
@@ -39,6 +40,13 @@ def parse_args():
         "--sequence",
         type=str,
         help="the sequence of words to be translated. NOTE: This cannot be used with -img at the same time"
+    )
+    ap.add_argument(
+        "-tcfg",
+        "--tesseract-config",
+        type=str,
+        default="-l eng --oem 1 --psm 8",
+        help="parameters and their values for the Tesseract OCR engine"
     )
     ap.add_argument(
         "-cat",
@@ -90,9 +98,10 @@ def parse_args():
             ap.error("Input image could not be found.")
 
         # east model
-        ARGS.east_model = path_join(TEXT_DETECTION_MODELS_DIR, ARGS.east_model)
-        if not isfile(ARGS.east_model):
-            ap.error("Detector model could not be found.")
+        if ARGS.east_model:
+            ARGS.east_model = path_join(TEXT_DETECTION_MODELS_DIR, ARGS.east_model)
+            if not isfile(ARGS.east_model):
+                ap.error("Detector model could not be found.")
 
         if ARGS.width % 32 != 0:
             ap.error("Resized width must be a multiple of 32.")

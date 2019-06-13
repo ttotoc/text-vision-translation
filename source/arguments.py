@@ -32,7 +32,6 @@ def parse_args():
         "-tm",
         "--translation-model",
         type=str,
-        required=True,
         help="name of the translation model(without extension, located in ../models/translation/)"
     )
     ap.add_argument(
@@ -88,10 +87,12 @@ def parse_args():
     global ARGS
     ARGS = ap.parse_args()
 
-    # image OR sequence of words as input, not both simultaneously
-    if ARGS.image and ARGS.sequence:
-        ap.error("--image and --sequence parameters cannot be used in the same run instance.")
     if ARGS.image:
+
+        # image OR sequence of words as input, not both simultaneously
+        if ARGS.sequence:
+            ap.error("--image and --sequence parameters cannot be used at the same time.")
+
         ARGS.image = path_join(IMAGES_DIR, ARGS.image)
 
         if not isfile(ARGS.image):
@@ -111,18 +112,21 @@ def parse_args():
 
         if not 0.0 <= ARGS.padding:
             ap.error("Padding cannot be negative.")
-    elif not ARGS.sequence:
-        ap.error("Neither the --image nor the --sequence parameter have been introduced.")
 
     # translation model
-    model_path = path_join(TRANSLATION_MODELS_DIR, ARGS.translation_model)
-    params_path = path_join(TRANSLATION_MODELS_DIR, ARGS.translation_model) + ".pickle"
-    if not isfile(model_path + ".index"):
-        raise FileNotFoundError("The .index file associated with the model could not be found.")
-    if not isfile(params_path):
-        raise FileNotFoundError("The params(.pickle file) associated with the model could not be found.")
-    # modify the argument to store a dict of model and params paths
-    ARGS.translation_model = {
-        "model": model_path,
-        "params": params_path
-    }
+    if ARGS.translation_model:
+
+        if not ARGS.sequence and not ARGS.image:
+            ap.error("You must specify either --sequence or --image.")
+
+        model_path = path_join(TRANSLATION_MODELS_DIR, ARGS.translation_model)
+        params_path = path_join(TRANSLATION_MODELS_DIR, ARGS.translation_model) + ".pickle"
+        if not isfile(model_path + ".index"):
+            raise FileNotFoundError("The .index file associated with the model could not be found.")
+        if not isfile(params_path):
+            raise FileNotFoundError("The params(.pickle file) associated with the model could not be found.")
+        # modify the argument to store a dict of model and params paths
+        ARGS.translation_model = {
+            "model": model_path,
+            "params": params_path
+        }

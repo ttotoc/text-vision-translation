@@ -22,7 +22,6 @@ if __name__ == "__main__":
     # parse the cli args
     arguments.parse_args()
 
-    # image processing
     if arguments.ARGS.image:
 
         # load the input image
@@ -45,4 +44,5 @@ if __name__ == "__main__":
         text = [arguments.ARGS.sequence]
 
     # perform translation on returned text and print to console
-    translation.perform(text)
+    if arguments.ARGS.translation_model:
+        translation.perform(text)

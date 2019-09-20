@@ -8,6 +8,7 @@ def perform(image):
     from arguments import ARGS
 
     # resize the image and grab the new image dimensions
+    orig_image = image.copy()
     image = cv2.resize(image, (ARGS.width, ARGS.height))
     height, width = image.shape[:2]
 
@@ -83,4 +84,50 @@ def perform(image):
 
     # apply non-maxima suppression to suppress weak, overlapping bounding boxes
     boxes = non_max_suppression(np.array(rectangles), probs=confidences, overlapThresh=0.1)
+
+    # bring the bounding boxes' ratio back to the original image's ratio
+
+    orig_height, orig_width = orig_image.shape[:2]
+    # determine the ratio change for both the width and height
+    ratio_width = orig_width / float(ARGS.width)
+    ratio_height = orig_height / float(ARGS.height)
+
+    for i, (start_x, start_y, end_x, end_y) in enumerate(boxes):
+        # scale the bounding box coordinates based on the respective ratios
+        start_x = int(start_x * ratio_width)
+        start_y = int(start_y * ratio_height)
+        end_x = int(end_x * ratio_width)
+        end_y = int(end_y * ratio_height)
+
+        # in order to obtain a better OCR of the text we can potentially
+        # apply a bit of padding surrounding the bounding box -- here we
+        # are computing the deltas in both the x and y directions
+        delta_x = int((end_x - start_x) * ARGS.padding)
+        delta_y = int((end_y - start_y) * ARGS.padding)
+
+        # apply padding to each side of the bounding box, respectively
+        start_x = max(0, start_x - delta_x)
+        start_y = max(0, start_y - delta_y)
+        end_x = min(orig_width, end_x + (delta_x * 2))
+        end_y = min(orig_height, end_y + (delta_y * 2))
+
+        # update the coords
+        boxes[i, 0] = start_x
+        boxes[i, 1] = start_y
+        boxes[i, 2] = end_x
+        boxes[i, 3] = end_y
+
+
+    # make a copy the output image
+    output = orig_image.copy()
+
+    # loop over the results and show them on the image
+    for (start_x, start_y, end_x, end_y) in boxes:
+        # draw the text and a bounding box surrounding the text region of the input image
+        cv2.rectangle(output, (start_x, start_y), (end_x, end_y), (0, 0, 255), thickness=2)
+
+    cv2.imshow(ARGS.image, output)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
+
     return boxes

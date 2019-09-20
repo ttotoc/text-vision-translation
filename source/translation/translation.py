@@ -4,13 +4,19 @@ import tensorflow as tf
 from translation.train import Decoder, Encoder
 from . import data_preparation, params_saveload
 
+CURRENT_MODEL, PARAMS, ENCODER, DECODER, OPTIMIZER = None, None, None, None, None
+
 
 def evaluate(sentence, encoder, decoder, input_lang_data, target_lang_data, max_len_input, max_len_target):
     attention_plot = np.zeros((max_len_target, max_len_input))
 
     sentence = data_preparation.preprocess_sentence(sentence)
 
-    inputs = [input_lang_data.word2idx[word] for word in sentence.split(' ')]
+    try:
+        inputs = [input_lang_data.word2idx[word] for word in sentence.split(' ')]
+    except KeyError as ke:
+        print(f"Word not found in model dictionary. Aborting translation...")
+        return
     inputs = tf.keras.preprocessing.sequence.pad_sequences([inputs], maxlen=max_len_input, padding='post')
     inputs = tf.convert_to_tensor(inputs)
 
@@ -52,27 +58,33 @@ def translate(sentence, encoder, decoder, input_lang_data, target_lang_data, max
 def perform(sentences):
     from arguments import ARGS
 
-    print("[INFO] loading translation model language...")
-    params = params_saveload.load(ARGS.translation_model["params"])
+    global CURRENT_MODEL, PARAMS, ENCODER, DECODER, OPTIMIZER
+    if ARGS.translation_model["model"] != CURRENT_MODEL:
+        print("[INFO] loading translation model language...")
+        PARAMS = params_saveload.load(ARGS.translation_model["params"])
 
-    encoder = Encoder(params["input_vocab_len"], params["embedding_dim"], params["hidden_units"], params["batch_size"])
-    decoder = Decoder(params["target_vocab_len"], params["embedding_dim"], params["hidden_units"], params["batch_size"])
-    optimizer = tf.train.AdamOptimizer()
+        ENCODER = Encoder(PARAMS["input_vocab_len"], PARAMS["embedding_dim"], PARAMS["hidden_units"],
+                          PARAMS["batch_size"])
+        DECODER = Decoder(PARAMS["target_vocab_len"], PARAMS["embedding_dim"], PARAMS["hidden_units"],
+                          PARAMS["batch_size"])
+        OPTIMIZER = tf.train.AdamOptimizer()
 
-    checkpoint = tf.train.Checkpoint(optimizer=optimizer,
-                                     encoder=encoder,
-                                     decoder=decoder)
+        checkpoint = tf.train.Checkpoint(optimizer=OPTIMIZER,
+                                         encoder=ENCODER,
+                                         decoder=DECODER)
 
-    print("[INFO] loading translation model variables...")
-    checkpoint.restore(ARGS.translation_model["model"])
+        print("[INFO] loading translation model variables...")
+        checkpoint.restore(ARGS.translation_model["model"])
+
+        CURRENT_MODEL = ARGS.translation_model["model"]
 
     print("Translations: ")
     for i, sentence in enumerate(sentences):
         translated = translate(
             sentence,
-            encoder, decoder,
-            params["input_lang_data"], params["target_lang_data"],
-            params["max_len_input"], params["max_len_target"]
+            ENCODER, DECODER,
+            PARAMS["input_lang_data"], PARAMS["target_lang_data"],
+            PARAMS["max_len_input"], PARAMS["max_len_target"]
         )
 
         print(

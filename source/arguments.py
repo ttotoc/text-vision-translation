@@ -1,7 +1,6 @@
+import argparse
 from os.path import isfile
 from os.path import join as path_join
-
-ARGS = None
 
 TEXT_DETECTION_MODELS_DIR = "../models/text_detection/"
 TRANSLATION_MODELS_DIR = "../models/translation/"
@@ -9,83 +8,7 @@ IMAGES_DIR = "../images/"
 
 
 def parse_args():
-    # CLI Arguments library
-    import argparse
-
-    ap = argparse.ArgumentParser()
-
-    ap.add_argument(
-        "-img",
-        "--image",
-        type=str,
-        help="input image(located in ../images/). NOTE: This cannot be used with -s at the same time"
-    )
-    ap.add_argument(
-        "-east",
-        "--east-model",
-        type=str,
-        #default=path_join(TEXT_DETECTION_MODELS_DIR, "frozen_east_text_detection.pb"),
-        help="EAST text detector model(with the extension, located in ../models/text_detection/)."
-             "If not provided, the program will use Tesseract on the whole input image"
-    )
-    ap.add_argument(
-        "-tm",
-        "--translation-model",
-        type=str,
-        help="name of the translation model(without extension, located in ../models/translation/)"
-    )
-    ap.add_argument(
-        "-s",
-        "--sequence",
-        type=str,
-        help="the sequence of words to be translated. NOTE: This cannot be used with -img at the same time"
-    )
-    ap.add_argument(
-        "-tcfg",
-        "--tesseract-config",
-        type=str,
-        default="-l eng --oem 1 --psm 8",
-        help="parameters and their values for the Tesseract OCR engine"
-    )
-    ap.add_argument(
-        "-cat",
-        "--concatenate",
-        action="store_true",
-        help="only for text recognition, determines whether the recognized text list returned by the Tesseract"
-             "is concatenated into a single sequence or not(for then to be transmitted to the translation model)"
-    )
-    ap.add_argument(
-        "-c",
-        "--min-confidence-roi",
-        type=float,
-        default=0.5,
-        help="minimum probability required to inspect a possible region of interest"
-    )
-    ap.add_argument(
-        "-w",
-        "--width",
-        type=int,
-        default=320,
-        help="nearest multiple of 32 for resized width"
-    )
-    ap.add_argument(
-        "-e",
-        "--height",
-        type=int,
-        default=320,
-        help="nearest multiple of 32 for resized height"
-    )
-    ap.add_argument(
-        "-p",
-        "--padding",
-        type=float,
-        default=0.05,
-        help="amount of padding to add to each border of a region of interest(0.0 - 1.0)"
-    )
-
-    # set the arguments global var
-    global ARGS
-    ARGS = ap.parse_args()
+    global ARGS, ap
 
     if ARGS.image:
 
@@ -95,7 +18,7 @@ def parse_args():
 
         ARGS.image = path_join(IMAGES_DIR, ARGS.image)
 
-        if not isfile(ARGS.image):
+        if not image_exists(ARGS.image):
             ap.error("Input image could not be found.")
 
         # east model
@@ -114,7 +37,7 @@ def parse_args():
             ap.error("Padding cannot be negative.")
 
     # translation model
-    if ARGS.translation_model:
+    if ARGS.translation_model and not isinstance(ARGS.translation_model, dict):
 
         if not ARGS.sequence and not ARGS.image:
             ap.error("You must specify either --sequence or --image.")
@@ -130,3 +53,98 @@ def parse_args():
             "model": model_path,
             "params": params_path
         }
+
+
+# validation functions
+def image_exists(img_path):
+    if not isfile(img_path):
+        return False
+
+    return True
+
+
+ap = argparse.ArgumentParser()
+
+ap.add_argument(
+    "-img",
+    "--image",
+    type=str,
+    default=path_join(IMAGES_DIR, "handwritten.jpeg"),
+    help="input image(located in ../images/). NOTE: This cannot be used with -s at the same time"
+)
+ap.add_argument(
+    "-east",
+    "--east-model",
+    type=str,
+    default=path_join(TEXT_DETECTION_MODELS_DIR, "frozen_east_text_detection.pb"),
+    help="EAST text detector model(with the extension, located in ../models/text_detection/)."
+         "If not provided, the program will use Tesseract on the whole input image"
+)
+ap.add_argument(
+    "-r",
+    "--recognition",
+    type=str,
+    default=False,
+    help="perform recognition after detection"
+         "If not provided, the program will use Tesseract on the whole input image"
+)
+ap.add_argument(
+    "-tm",
+    "--translation-model",
+    type=str,
+    default={
+            "model": path_join(TRANSLATION_MODELS_DIR, "checkpoint"),
+            "params": path_join(TRANSLATION_MODELS_DIR, "checkpoint") + ".pickle"
+        },
+    help="name of the translation model(without extension, located in ../models/translation/)"
+)
+ap.add_argument(
+    "-s",
+    "--sequence",
+    type=str,
+    help="the sequence of words to be translated. NOTE: This cannot be used with -img at the same time"
+)
+ap.add_argument(
+    "-tcfg",
+    "--tesseract-config",
+    type=str,
+    default="-l eng --oem 1 --psm 8",
+    help="parameters and their values for the Tesseract OCR engine"
+)
+ap.add_argument(
+    "-cat",
+    "--concatenate",
+    action="store_true",
+    help="only for text recognition, determines whether the recognized text list returned by the Tesseract"
+         "is concatenated into a single sequence or not(for then to be transmitted to the translation model)"
+)
+ap.add_argument(
+    "-c",
+    "--min-confidence-roi",
+    type=float,
+    default=0.5,
+    help="minimum probability required to inspect a possible region of interest"
+)
+ap.add_argument(
+    "-w",
+    "--width",
+    type=int,
+    default=320,
+    help="nearest multiple of 32 for resized width"
+)
+ap.add_argument(
+    "-e",
+    "--height",
+    type=int,
+    default=320,
+    help="nearest multiple of 32 for resized height"
+)
+ap.add_argument(
+    "-p",
+    "--padding",
+    type=float,
+    default=0.05,
+    help="amount of padding to add to each border of a region of interest(0.0 - 1.0)"
+)
+
+ARGS = ap.parse_args()

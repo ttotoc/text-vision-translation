@@ -18,34 +18,11 @@ def perform(image, boxes=None):
     if boxes is None:
         return [pytesseract.image_to_string(image, config=config)]
 
-    orig_height, orig_width = image.shape[:2]
-
-    # determine the ratio change for both the width and height
-    ratio_width = orig_width / float(ARGS.width)
-    ratio_height = orig_height / float(ARGS.height)
-
     # list of results
     results = []
 
     # loop over the bounding boxes
     for (start_x, start_y, end_x, end_y) in boxes:
-        # scale the bounding box coordinates based on the respective ratios
-        start_x = int(start_x * ratio_width)
-        start_y = int(start_y * ratio_height)
-        end_x = int(end_x * ratio_width)
-        end_y = int(end_y * ratio_height)
-
-        # in order to obtain a better OCR of the text we can potentially
-        # apply a bit of padding surrounding the bounding box -- here we
-        # are computing the deltas in both the x and y directions
-        delta_x = int((end_x - start_x) * ARGS.padding)
-        delta_y = int((end_y - start_y) * ARGS.padding)
-
-        # apply padding to each side of the bounding box, respectively
-        start_x = max(0, start_x - delta_x)
-        start_y = max(0, start_y - delta_y)
-        end_x = min(orig_width, end_x + (delta_x * 2))
-        end_y = min(orig_height, end_y + (delta_y * 2))
 
         # extract the actual padded ROI
         roi = image[start_y:end_y, start_x:end_x]
@@ -71,14 +48,13 @@ def perform(image, boxes=None):
         text = "".join((c if ord(c) < 128 else "" for c in text)).strip()
 
         # draw the text and a bounding box surrounding the text region of the input image
-        cv2.rectangle(output, (start_x, start_y), (end_x, end_y), (0, 0, 255), thickness=1)
-        # cv2.putText(output, text, (start_x, start_y - 10),
-        #             cv2.FONT_HERSHEY_PLAIN, fontScale=1.6, color=(50, 50, 255), thickness=1)
+        cv2.rectangle(output, (start_x, start_y), (end_x, end_y), (0, 0, 255), thickness=2)
+        cv2.putText(output, text, (start_x, start_y - 10),
+                     cv2.FONT_HERSHEY_PLAIN, fontScale=1.1, color=(50, 50, 255), thickness=2)
 
     cv2.imshow(ARGS.image, output)
-
-    # freeze until keypress
-    cv2.waitKey(0)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
 
     # return text results
     if ARGS.concatenate:

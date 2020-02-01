@@ -1,17 +1,6 @@
-from os.path import join as path_join
-
-import cv2
-
-import arguments
-import detection
-import recognition
-from arguments import ARGS
-from translation import translation
-
-
 class Menu:
     HELP_OPTION = "help"
-    MENU_CHANGED = True
+    MIN_OPTION_IDX = 1
 
     def __init__(self, option_args, description=None):
         '''
@@ -41,18 +30,18 @@ class Menu:
             input_val = input('> ')
 
             # check for other text options
-            if isinstance(input_val, str) and input_val == Menu.HELP_OPTION:
+            if input_val == Menu.HELP_OPTION:
                 self.help()
                 continue
 
             # validate input
-            try:
+            if input_val.isnumeric():
                 input_val = int(input_val)
-            except Exception as ex:
+            else:
                 print("Invalid option")
                 continue
 
-            if not 1 <= input_val <= len(self.options):
+            if not Menu.MIN_OPTION_IDX <= input_val <= len(self.options):
                 print(f'Invalid option(must be between {1} and {len(self.options)})')
                 continue
 
@@ -81,62 +70,3 @@ class Menu:
 class ExitMenu:
     pass
 
-
-# FUNCTIONS FOR OPTIONS
-
-# set image option
-def set_image():
-    input_name = input("Enter the file name: ")
-    img_path = path_join(arguments.IMAGES_DIR, input_name)
-    if arguments.image_exists(img_path):
-        ARGS.image = img_path
-        print(f"Working image changed to: {input_name}")
-    else:
-        print(f"Invalid image name: {input_name}")
-
-
-# detection
-def detect():
-    image = cv2.imread(arguments.ARGS.image)
-    detection.perform(image)
-
-
-# detection & recognition
-def detect_recongize():
-    image = cv2.imread(arguments.ARGS.image)
-    boxes = detection.perform(image)
-    recognition.perform(image, boxes)
-
-
-def detect_recognize_translate():
-    image = cv2.imread(arguments.ARGS.image)
-    boxes = detection.perform(image)
-    text = recognition.perform(image, boxes)
-    translation.perform(text)
-
-
-def recognize_translate():
-    image = cv2.imread(arguments.ARGS.image)
-    text = recognition.perform(image)
-    print(f"Recognized text: {text}")
-    translation.perform(text)
-
-
-def recognize():
-    image = cv2.imread(arguments.ARGS.image)
-    text = recognition.perform(image)
-    print(f"Recognized text: {text}")
-
-
-def translate():
-    text = [input("Enter text to translate: ")]
-    translation.perform(text)
-
-
-def other_options():
-    print("WIP")
-
-
-def exit_app():
-    import sys
-    sys.exit()

@@ -5,7 +5,7 @@ import tensorflow as tf
 
 from translation.train import Decoder, Encoder
 from . import data_preparation, params_saveload
-from helpers.consts import PATH_MODELS
+from helpers.consts import PATH_MODEL_TRANSLATION
 from configuration.config import get_setting_value
 from configuration.settings import TRANSLATION
 
@@ -61,8 +61,7 @@ def translate(sentence, encoder, decoder, input_lang_data, target_lang_data, max
 
 
 def perform(sentences):
-    config_model = get_setting_value(TRANSLATION)
-    model_path = os.path.join(PATH_MODELS, config_model)
+    model_path = os.path.join(PATH_MODEL_TRANSLATION, get_setting_value(TRANSLATION))
 
     global CURRENT_MODEL, PARAMS, ENCODER, DECODER, OPTIMIZER
     if model_path != CURRENT_MODEL:
@@ -73,7 +72,7 @@ def perform(sentences):
                           PARAMS["batch_size"])
         DECODER = Decoder(PARAMS["target_vocab_len"], PARAMS["embedding_dim"], PARAMS["hidden_units"],
                           PARAMS["batch_size"])
-        OPTIMIZER = tf.train.AdamOptimizer()
+        OPTIMIZER = tf.compat.v1.train.AdamOptimizer()
 
         checkpoint = tf.train.Checkpoint(optimizer=OPTIMIZER,
                                          encoder=ENCODER,

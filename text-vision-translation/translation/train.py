@@ -5,7 +5,7 @@ import tensorflow as tf
 
 def gru(units):
     # Gated recurrent network
-    return tf.keras.layers.CuDNNGRU(units,
+    return tf.compat.v1.keras.layers.CuDNNGRU(units,
                                     return_sequences=True,
                                     return_state=True,
                                     recurrent_initializer='glorot_uniform')
@@ -154,7 +154,7 @@ if __name__ == "__main__":
     decoder = Decoder(target_vocab_len, EMBEDDING_DIM, HIDDEN_UNITS, BATCH_SIZE)
 
     # optimizer
-    optimizer = tf.train.AdamOptimizer()
+    optimizer = tf.compat.v1.train.AdamOptimizer()
 
 
     # loss function

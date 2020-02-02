@@ -1,7 +1,10 @@
+import os
+
 import cv2
 import numpy as np
 from imutils.object_detection import non_max_suppression
 
+from helpers.consts import PATH_MODEL_DETECTION
 from configuration.config import get_setting_value
 from configuration.settings import WIDTH_DETECTION, HEIGHT_DETECTION, EAST_TEXT_DETECTION, CONFIDENCE_DETECTION, \
     PADDING_DETECTION, IMAGE
@@ -29,7 +32,8 @@ def perform(image):
 
     # load the pre-trained EAST text detector
     print("[INFO] loading EAST text detector...")
-    net = cv2.dnn.readNet(get_setting_value(EAST_TEXT_DETECTION))
+    model_path = os.path.join(PATH_MODEL_DETECTION, get_setting_value(EAST_TEXT_DETECTION))
+    net = cv2.dnn.readNet(model_path)
 
     # construct a blob from the image
     blob = cv2.dnn.blobFromImage(image, 1.0, (width, height), (123.68, 116.78, 103.94), swapRB=True, crop=False)

@@ -2,10 +2,13 @@ import os
 
 import cv2
 
-from helpers.consts import PATH_IMAGES
-from .menu import Menu, ExitMenu
+import detection
+import recognition
 from configuration.config import get_setting_value, set_setting_value
 from configuration.settings import IMAGE
+from helpers.consts import PATH_IMAGES
+from menu.menu import Menu, ExitMenu
+from translation import translation
 
 
 def start():
@@ -46,33 +49,39 @@ def set_image():
 
 # detection
 def detect():
-    image = cv2.imread(get_setting_value)
+    img_path = os.path.join(PATH_IMAGES, get_setting_value(IMAGE))
+    image = cv2.imread(img_path)
+    print(get_setting_value(IMAGE))
     detection.perform(image)
 
 
 # detection & recognition
 def detect_recognize():
-    image = cv2.imread(IMAGE)
+    img_path = os.path.join(PATH_IMAGES, get_setting_value(IMAGE))
+    image = cv2.imread(img_path)
     boxes = detection.perform(image)
     recognition.perform(image, boxes)
 
 
 def detect_recognize_translate():
-    image = cv2.imread(IMAGE)
+    img_path = os.path.join(PATH_IMAGES, get_setting_value(IMAGE))
+    image = cv2.imread(img_path)
     boxes = detection.perform(image)
     text = recognition.perform(image, boxes)
     translation.perform(text)
 
 
 def recognize_translate():
-    image = cv2.imread(IMAGE)
+    img_path = os.path.join(PATH_IMAGES, get_setting_value(IMAGE))
+    image = cv2.imread(img_path)
     text = recognition.perform(image)
     print(f"Recognized text: {text}")
     translation.perform(text)
 
 
 def recognize():
-    image = cv2.imread(IMAGE)
+    img_path = os.path.join(PATH_IMAGES, get_setting_value(IMAGE))
+    image = cv2.imread(img_path)
     text = recognition.perform(image)
     print(f"Recognized text: {text}")
 

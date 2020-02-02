@@ -1,4 +1,5 @@
 from os import environ
+
 from configuration.config import load_config
 from menu.main_menu import start as main_menu_start
 

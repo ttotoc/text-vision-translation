@@ -6,9 +6,9 @@ import tensorflow as tf
 def gru(units):
     # Gated recurrent network
     return tf.compat.v1.keras.layers.CuDNNGRU(units,
-                                    return_sequences=True,
-                                    return_state=True,
-                                    recurrent_initializer='glorot_uniform')
+                                              return_sequences=True,
+                                              return_state=True,
+                                              recurrent_initializer='glorot_uniform')
 
 
 class Encoder(tf.keras.Model):

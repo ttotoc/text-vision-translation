@@ -4,14 +4,13 @@ import cv2
 import numpy as np
 from imutils.object_detection import non_max_suppression
 
-from helpers.consts import PATH_MODEL_DETECTION
 from configuration.config import get_setting_value
 from configuration.settings import WIDTH_DETECTION, HEIGHT_DETECTION, EAST_TEXT_DETECTION, CONFIDENCE_DETECTION, \
     PADDING_DETECTION, IMAGE
+from helpers.consts import PATH_MODEL_DETECTION
 
 
 def perform(image):
-
     config_width = int(get_setting_value(WIDTH_DETECTION))
     config_height = int(get_setting_value(HEIGHT_DETECTION))
     config_padding = float(get_setting_value(PADDING_DETECTION))
@@ -128,7 +127,6 @@ def perform(image):
         boxes[i, 1] = start_y
         boxes[i, 2] = end_x
         boxes[i, 3] = end_y
-
 
     # make a copy the output image
     output = orig_image.copy()

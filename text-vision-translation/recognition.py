@@ -6,7 +6,6 @@ from configuration.settings import IMAGE, TESSERACT_PARAMS, CONCATENATE
 
 
 def perform(image, boxes=None):
-
     config_image = get_setting_value(IMAGE)
 
     # tesseract config
@@ -26,7 +25,6 @@ def perform(image, boxes=None):
 
     # loop over the bounding boxes
     for (start_x, start_y, end_x, end_y) in boxes:
-
         # extract the actual padded ROI
         roi = image[start_y:end_y, start_x:end_x]
 
@@ -53,7 +51,7 @@ def perform(image, boxes=None):
         # draw the text and a bounding box surrounding the text region of the input image
         cv2.rectangle(output, (start_x, start_y), (end_x, end_y), (0, 0, 255), thickness=2)
         cv2.putText(output, text, (start_x, start_y - 10),
-                     cv2.FONT_HERSHEY_PLAIN, fontScale=1.1, color=(50, 50, 255), thickness=2)
+                    cv2.FONT_HERSHEY_PLAIN, fontScale=1.1, color=(50, 50, 255), thickness=2)
 
     cv2.imshow(config_image, output)
     cv2.waitKey()

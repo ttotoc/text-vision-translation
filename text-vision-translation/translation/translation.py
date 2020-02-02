@@ -3,11 +3,11 @@ import os
 import numpy as np
 import tensorflow as tf
 
-from translation.train import Decoder, Encoder
-from . import data_preparation, params_saveload
-from helpers.consts import PATH_MODEL_TRANSLATION
 from configuration.config import get_setting_value
 from configuration.settings import TRANSLATION
+from helpers.consts import PATH_MODEL_TRANSLATION
+from translation.train import Decoder, Encoder
+from translation import data_preparation, params_saveload
 
 CURRENT_MODEL, PARAMS, ENCODER, DECODER, OPTIMIZER = None, None, None, None, None
 

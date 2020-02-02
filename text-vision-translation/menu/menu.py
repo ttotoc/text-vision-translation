@@ -69,4 +69,3 @@ class Menu:
 # used when you want for an option to exit from the current menu
 class ExitMenu:
     pass
-

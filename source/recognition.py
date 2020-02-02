@@ -1,10 +1,13 @@
 import cv2
 import pytesseract
 
+from configuration.config import get_setting_value
+from configuration.settings import IMAGE, TESSERACT_PARAMS, CONCATENATE
+
 
 def perform(image, boxes=None):
-    # cli arguments
-    from arguments import ARGS
+
+    config_image = get_setting_value(IMAGE)
 
     # tesseract config
     # in order to apply Tesseract v4 to OCR text we must supply
@@ -12,7 +15,7 @@ def perform(image, boxes=None):
     # wish to use the LSTM neural net model for OCR, and finally
     # (3) an OEM value, in this case, 7 which implies that we are
     # treating the image as a single line of text
-    config = ARGS.tesseract_config
+    config = get_setting_value(TESSERACT_PARAMS)
 
     # perform recognition on whole image if no boxes
     if boxes is None:
@@ -52,12 +55,12 @@ def perform(image, boxes=None):
         cv2.putText(output, text, (start_x, start_y - 10),
                      cv2.FONT_HERSHEY_PLAIN, fontScale=1.1, color=(50, 50, 255), thickness=2)
 
-    cv2.imshow(ARGS.image, output)
+    cv2.imshow(config_image, output)
     cv2.waitKey()
     cv2.destroyAllWindows()
 
     # return text results
-    if ARGS.concatenate:
+    if get_setting_value(CONCATENATE):
         return [' '.join([result[1] for result in results])]
 
     return [result[1] for result in results]

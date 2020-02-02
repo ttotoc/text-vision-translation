@@ -1,8 +1,13 @@
+import os
+
 import numpy as np
 import tensorflow as tf
 
 from translation.train import Decoder, Encoder
 from . import data_preparation, params_saveload
+from helpers.consts import PATH_MODELS
+from configuration.config import get_setting_value
+from configuration.settings import TRANSLATION
 
 CURRENT_MODEL, PARAMS, ENCODER, DECODER, OPTIMIZER = None, None, None, None, None
 
@@ -56,12 +61,13 @@ def translate(sentence, encoder, decoder, input_lang_data, target_lang_data, max
 
 
 def perform(sentences):
-    from arguments import ARGS
+    config_model = get_setting_value(TRANSLATION)
+    model_path = os.path.join(PATH_MODELS, config_model)
 
     global CURRENT_MODEL, PARAMS, ENCODER, DECODER, OPTIMIZER
-    if ARGS.translation_model["model"] != CURRENT_MODEL:
+    if model_path != CURRENT_MODEL:
         print("[INFO] loading translation model language...")
-        PARAMS = params_saveload.load(ARGS.translation_model["params"])
+        PARAMS = params_saveload.load(model_path + ".pickle")
 
         ENCODER = Encoder(PARAMS["input_vocab_len"], PARAMS["embedding_dim"], PARAMS["hidden_units"],
                           PARAMS["batch_size"])
@@ -74,9 +80,9 @@ def perform(sentences):
                                          decoder=DECODER)
 
         print("[INFO] loading translation model variables...")
-        checkpoint.restore(ARGS.translation_model["model"])
+        checkpoint.restore(model_path)
 
-        CURRENT_MODEL = ARGS.translation_model["model"]
+        CURRENT_MODEL = model_path
 
     print("Translations: ")
     for i, sentence in enumerate(sentences):

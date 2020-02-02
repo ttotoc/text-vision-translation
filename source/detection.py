@@ -2,14 +2,22 @@ import cv2
 import numpy as np
 from imutils.object_detection import non_max_suppression
 
+from configuration.config import get_setting_value
+from configuration.settings import WIDTH_DETECTION, HEIGHT_DETECTION, EAST_TEXT_DETECTION, CONFIDENCE_DETECTION, \
+    PADDING_DETECTION, IMAGE
+
 
 def perform(image):
-    # get cli arguments
-    from arguments import ARGS
+
+    config_width = int(get_setting_value(WIDTH_DETECTION))
+    config_height = int(get_setting_value(HEIGHT_DETECTION))
+    config_padding = float(get_setting_value(PADDING_DETECTION))
+    config_confidence = float(get_setting_value(CONFIDENCE_DETECTION))
+    config_image = get_setting_value(IMAGE)
 
     # resize the image and grab the new image dimensions
     orig_image = image.copy()
-    image = cv2.resize(image, (ARGS.width, ARGS.height))
+    image = cv2.resize(image, (config_width, config_height))
     height, width = image.shape[:2]
 
     # define the two output layer names for the EAST detector model that we are interested in
@@ -21,7 +29,7 @@ def perform(image):
 
     # load the pre-trained EAST text detector
     print("[INFO] loading EAST text detector...")
-    net = cv2.dnn.readNet(ARGS.east_model)
+    net = cv2.dnn.readNet(get_setting_value(EAST_TEXT_DETECTION))
 
     # construct a blob from the image
     blob = cv2.dnn.blobFromImage(image, 1.0, (width, height), (123.68, 116.78, 103.94), swapRB=True, crop=False)
@@ -51,7 +59,7 @@ def perform(image):
         # loop over the number of columns
         for x in range(0, columns):
             # ignore scores that don't have sufficient probability
-            if scores_row[x] < ARGS.min_confidence_roi:
+            if scores_row[x] < config_confidence:
                 continue
 
             # compute the offset factor as our resulting feature
@@ -89,8 +97,8 @@ def perform(image):
 
     orig_height, orig_width = orig_image.shape[:2]
     # determine the ratio change for both the width and height
-    ratio_width = orig_width / float(ARGS.width)
-    ratio_height = orig_height / float(ARGS.height)
+    ratio_width = orig_width / float(config_width)
+    ratio_height = orig_height / float(config_height)
 
     for i, (start_x, start_y, end_x, end_y) in enumerate(boxes):
         # scale the bounding box coordinates based on the respective ratios
@@ -102,8 +110,8 @@ def perform(image):
         # in order to obtain a better OCR of the text we can potentially
         # apply a bit of padding surrounding the bounding box -- here we
         # are computing the deltas in both the x and y directions
-        delta_x = int((end_x - start_x) * ARGS.padding)
-        delta_y = int((end_y - start_y) * ARGS.padding)
+        delta_x = int((end_x - start_x) * config_padding)
+        delta_y = int((end_y - start_y) * config_padding)
 
         # apply padding to each side of the bounding box, respectively
         start_x = max(0, start_x - delta_x)
@@ -126,7 +134,7 @@ def perform(image):
         # draw the text and a bounding box surrounding the text region of the input image
         cv2.rectangle(output, (start_x, start_y), (end_x, end_y), (0, 0, 255), thickness=2)
 
-    cv2.imshow(ARGS.image, output)
+    cv2.imshow(config_image, output)
     cv2.waitKey()
     cv2.destroyAllWindows()
 

@@ -1,10 +1,14 @@
-from os.path import join as os_path_join
+import os
+
 import cv2
+
+from helpers.consts import PATH_IMAGES
 from .menu import Menu, ExitMenu
+from configuration.config import get_setting_value, set_setting_value
+from configuration.settings import IMAGE
 
 
 def start():
-
     # image submenu
     image_menu_options = [
         ("Set image", set_image),
@@ -28,12 +32,13 @@ def start():
 
     main_menu.open()
 
+
 # set image option
 def set_image():
     input_name = input("Enter the file name: ")
-    img_path = os_path_join(arguments.IMAGES_DIR, input_name)
-    if arguments.image_exists(img_path):
-        ARGS.image = img_path
+    img_path = os.path.join(PATH_IMAGES, input_name)
+    if not os.path.isfile(img_path):
+        set_setting_value(IMAGE, img_path)
         print(f"Working image changed to: {input_name}")
     else:
         print(f"Invalid image name: {input_name}")
@@ -41,33 +46,33 @@ def set_image():
 
 # detection
 def detect():
-    image = cv2.imread(arguments.ARGS.image)
+    image = cv2.imread(get_setting_value)
     detection.perform(image)
 
 
 # detection & recognition
 def detect_recognize():
-    image = cv2.imread(arguments.ARGS.image)
+    image = cv2.imread(IMAGE)
     boxes = detection.perform(image)
     recognition.perform(image, boxes)
 
 
 def detect_recognize_translate():
-    image = cv2.imread(arguments.ARGS.image)
+    image = cv2.imread(IMAGE)
     boxes = detection.perform(image)
     text = recognition.perform(image, boxes)
     translation.perform(text)
 
 
 def recognize_translate():
-    image = cv2.imread(arguments.ARGS.image)
+    image = cv2.imread(IMAGE)
     text = recognition.perform(image)
     print(f"Recognized text: {text}")
     translation.perform(text)
 
 
 def recognize():
-    image = cv2.imread(arguments.ARGS.image)
+    image = cv2.imread(IMAGE)
     text = recognition.perform(image)
     print(f"Recognized text: {text}")
 

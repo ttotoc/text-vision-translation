@@ -8,3 +8,5 @@ PATH_MODELS = os.path.join(PATH_PROJECT_ROOT, 'models')
 PATH_MODEL_DETECTION = os.path.join(PATH_MODELS, "detection")
 PATH_MODEL_TRANSLATION = os.path.join(PATH_MODELS, "translation")
 PATH_CONFIG = os.path.join(PATH_PROJECT_ROOT, 'cfg')
+
+EAST_RESIZE_MULT = 32

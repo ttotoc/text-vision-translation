@@ -48,3 +48,5 @@ def set_setting_value(setting, value):
     if setting.set_value(value):
         global _CONFIG
         _CONFIG[setting.section][setting] = value
+        with open(_PATH_CURR_CONFIG, 'w') as config_file:
+            _CONFIG.write(config_file)

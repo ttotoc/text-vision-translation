@@ -32,7 +32,7 @@ class Setting:
 
     @property
     def name(self):
-        return self._section
+        return self._name
 
     @property
     def section(self):

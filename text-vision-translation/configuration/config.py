@@ -31,7 +31,7 @@ def get_setting_value(setting):
     invalid_config_section = setting.section not in _CONFIG
     invalid_config_setting = False
     if not invalid_config_section:
-        invalid_config_setting = setting not in _CONFIG[setting.section]
+        invalid_config_setting = setting.name not in _CONFIG[setting.section]
 
     if invalid_config_setting or invalid_config_setting:
         with open(_PATH_CURR_CONFIG, 'w') as config_file:

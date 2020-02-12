@@ -12,16 +12,15 @@ from translation import data_preparation, params_saveload
 CURRENT_MODEL, PARAMS, ENCODER, DECODER, OPTIMIZER = None, None, None, None, None
 
 
-def evaluate(sentence, encoder, decoder, input_lang_data, target_lang_data, max_len_input, max_len_target):
-    attention_plot = np.zeros((max_len_target, max_len_input))
-
+def translate(sentence, encoder, decoder, input_lang_data, target_lang_data, max_len_input, max_len_target):
     sentence = data_preparation.preprocess_sentence(sentence)
 
     try:
-        inputs = [input_lang_data.word2idx[word] for word in sentence.split(' ')]
+        inputs = [input_lang_data.word2idx[word] for word in sentence.split()]
     except KeyError as ke:
-        print(f"Word not found in model dictionary. Aborting translation...")
+        print(f"Word not found in the model's dictionary. Translation aborted.")
         return
+
     inputs = tf.keras.preprocessing.sequence.pad_sequences([inputs], maxlen=max_len_input, padding='post')
     inputs = tf.convert_to_tensor(inputs)
 
@@ -34,28 +33,16 @@ def evaluate(sentence, encoder, decoder, input_lang_data, target_lang_data, max_
     dec_input = tf.expand_dims([target_lang_data.word2idx['<start>']], 0)
 
     for t in range(max_len_target):
-        predictions, dec_hidden, attention_weights = decoder(dec_input, dec_hidden, enc_out)
-
-        # storing the attention weights to plot later on
-        attention_weights = tf.reshape(attention_weights, (-1,))
-        attention_plot[t] = attention_weights.numpy()
-
+        predictions, dec_hidden, _ = decoder(dec_input, dec_hidden, enc_out)
         predicted_id = tf.argmax(predictions[0]).numpy()
 
         result += target_lang_data.idx2word[predicted_id] + ' '
 
         if target_lang_data.idx2word[predicted_id] == '<end>':
-            return result, sentence, attention_plot
+            return result
 
         # the predicted ID is fed back into the model
         dec_input = tf.expand_dims([predicted_id], 0)
-
-    return result, sentence, attention_plot
-
-
-def translate(sentence, encoder, decoder, input_lang_data, target_lang_data, max_len_input, max_len_target):
-    result, sentence, attention_plot = evaluate(sentence, encoder, decoder, input_lang_data, target_lang_data,
-                                                max_len_input, max_len_target)
 
     return result
 

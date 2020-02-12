@@ -31,5 +31,9 @@ class Setting:
         return self._value
 
     @property
+    def name(self):
+        return self._section
+
+    @property
     def section(self):
         return self._section

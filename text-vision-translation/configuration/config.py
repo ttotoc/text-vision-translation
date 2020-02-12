@@ -38,15 +38,15 @@ def get_setting_value(setting):
             if invalid_config_section:
                 _CONFIG[setting.section] = _CONFIG_DEFAULT[setting.section]
             elif invalid_config_setting:
-                _CONFIG[setting.section][setting] = _CONFIG_DEFAULT[setting.section][setting]
+                _CONFIG[setting.section][setting.name] = _CONFIG_DEFAULT[setting.section][setting.name]
             _CONFIG.write(config_file)
 
-    return _CONFIG[setting.section][setting]
+    return _CONFIG[setting.section][setting.name]
 
 
 def set_setting_value(setting, value):
     if setting.set_value(value):
         global _CONFIG
-        _CONFIG[setting.section][setting] = value
+        _CONFIG[setting.section][setting.name] = value
         with open(_PATH_CURR_CONFIG, 'w') as config_file:
             _CONFIG.write(config_file)
